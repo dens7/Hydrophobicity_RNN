@@ -1,0 +1,4 @@
+CNN_Input_ideal_all_voxelCount_avg30_2.0x2.0x0.3nm_20x20_All/
+CNN_Input_ideal_all_voxelCount_t10f_2.0x2.0x0.3nm_20x20_All/
+ideal_All/
+ideal_ext/
