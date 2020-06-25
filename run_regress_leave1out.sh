@@ -21,31 +21,16 @@ img_cols=$8
 
 tar_file=$4.tar.gz
 
-
-
-if [ $server == gluster ]
-then
-echo /mnt/gluster/kelkar2/${tar_file}
-cp /mnt/gluster/kelkar2/${tar_file} .
-elif [ $server == staging ]
-then
 echo /staging/kelkar2/${tar_file}
 cp /staging/kelkar2/${tar_file} .
-fi
 
 tar -xzf ${tar_file}
-
-#input_folder=CNN_Input_${label}/
-
-#output_folder=RegressionOutput_${label}/
-
-#output_folder=""
 
 echo "Hello CHTC from Job $1 running on `whoami`@`hostname`"
 
 echo $PWD
 
-python Lenet5_keras.py ${index} ${index_pickle} ${nDeep} ${folder_name} ${norm_method} ${img_rows} ${img_cols} #&> log${1}.out
+python RNN_Keras.py ${index} ${index_pickle} ${nDeep} ${folder_name} ${norm_method} ${img_rows} ${img_cols} #&> log${1}.out
 
 rm log${1}.out
 

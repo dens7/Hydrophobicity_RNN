@@ -1,19 +1,16 @@
 #!/bin/bash
 
-#sleep 20m
-
-rep_arr=('txf')
-density_arr=('voxelCount')
-CNStat=All
+CNStat='All'
 size='2.0x2.0x0.3nm'
-pixels='25x25'
-server=staging
+pixels='25x25' #_smear0.5
+img_rows="$(echo $pixels | cut -d"x" -f1)"
+img_cols="$(echo $pixels | cut -d"x" -f2)"
+img_cols="$(echo "$img_cols" | cut -d"_" -f1)"
+stack=(30)
+surfaces=ideal
 ligand_set=all
 
-for density in ${density_arr[@]}; do
-	for rep in ${rep_arr[@]}; do
-
-		bash submit_submit_chtc.sh ${density} ${rep} ${CNStat} ${size} ${pixels} ${server} ${ligand_set}
-
-	done
+for i in ${stack[@]}; do
+	bash submit_chtc.sh ${i} ${surfaces} ${size} ${pixels} ${CNStat} "${img_rows}" "${img_cols}" ${ligand_set}
 done
+

@@ -19,16 +19,22 @@ from tensorflow import keras
 from keras import backend as K
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 import sys
 import gc
 
 
-def choose_validation_set(file_name, index):
+def choose_validation_set_indices(file_name, index):
+    """
+    Chooses the validation_set according to the process number. The
+    :param file_name:
+    :param index: The model is learnt on a different part of the data set every time
+    :return:
+    """
     pickle_in = open(file_name, 'rb')
-    nfold_arr = pickle.load(pickle_in)
+    nfold_arr = pickle.load(pickle_in)  # For the purpose of this project, n=5
     pickle_in.close()
+    # nfold_arr[index] stores another list
     validation_set = nfold_arr[index]
     return validation_set
 
@@ -43,10 +49,11 @@ def load_pickle_array(folder, file):
 
 
 if __name__ == "__main__":
+
     index = int(sys.argv[1])
     file_name = sys.argv[2]
-    nDeep = int(sys.argv[3])
-    train_input_folder = sys.argv[4]
+    nDeep = sys.argv[3]
+    validate_input_folder = train_input_folder = sys.argv[4]
     output_folder = ""
     i, j, k = index, index, index
     norm_method = sys.argv[5]
@@ -56,19 +63,9 @@ if __name__ == "__main__":
     batch_size = 128  # Batch size
     nb_epoch = 50  # Number of times data is passed through network
     n_split = -1  # Ensures reading of arrays as 1 contiguous array file rather than n_split different pickles
-    # i=2
-    # j=4
-    # k=6
-    # train_input_folder = 'CNN_Input_voxelCount_t2f_All/'
-    # validate_input_folder = 'CNN_Input_voxelCount_t3f_regress_noCN/'
-    # nDeep = 2
-    # output_folder = ""
-
-    validate_input_folder = train_input_folder
 
     start_time = time.time()
 
-    # img_rows, img_cols = 32, 32
 
     print(train_input_folder)
 
@@ -127,48 +124,22 @@ if __name__ == "__main__":
             val_max_1 = np.hstack((val_max_1, val_max_0))
         val_max_1 = np.delete(val_max_1, 0, axis=1)
 
-        X_train_curr /= train_max_1[:, np.newaxis, np.newaxis, :]
+        X_train_curr /= train_max_1[:, np.newaxis, np.newaxis, :] # np.new
         X_validate_curr /= val_max_1[:, np.newaxis, np.newaxis, :]
         print('Arrays normalized with frame-wise max value')
 
     y_unique = np.unique(y_validate_curr)
-
-    validation_entries_ind = choose_validation_set(file_name, index)
-    validate_entries = y_unique[validation_entries_ind]
+    validate_entries = y_unique[choose_validation_set_indices(file_name, index)]
     for val in validate_entries:
         X_train_curr = np.delete(X_train_curr, np.where(y_train_curr == val), axis=0)
         y_train_curr = np.delete(y_train_curr, np.where(y_train_curr == val), axis=0)
     # Keep only validation set entries in validation array
     shape = np.shape(X_train_curr)
+
     if (nDeep == 1):
         X_train_curr = X_train_curr[:, :, :, 0]
-    X_train_curr = X_train_curr.reshape(
-        (shape[0], shape[1], shape[2], nDeep))  # Change 4th dimension to 3 for RGB images and 1 for single colour image
-    print('Training set picked out')
 
-    # Old protocol to delete masked elements
-    #    validate_mask = np.all((y_validate_curr != y_unique[i], y_validate_curr != y_unique[j], y_validate_curr != y_unique[k]), axis=0)
-    #    y_validate_curr = np.delete(y_validate_curr, np.where(validate_mask), axis=0)
-    #    X_validate_curr = np.delete(X_validate_curr, np.where(validate_mask), axis=0)
-    #    if (nDeep==1):
-    #        X_validate_curr = X_validate_curr[:,:,:,0]
-    #    shape = np.shape(X_validate_curr)
-    #    X_validate_curr = X_validate_curr.reshape((shape[0], shape[1], shape[2], nDeep)) # Change 4th dimension to 3 for RGB images and 1 for single colour image
-    #    print('Picked out validation set')
-    #    #X_validate_curr = np.float16(1) - X_validate_curr
-    #    print('validation set inverted')
-
-    # Trim validation set entries from training array
-    #    train_mask = np.any((y_train_curr == y_unique[i], y_train_curr == y_unique[j], y_train_curr == y_unique[k]), axis=0)
-    #    y_train_curr = np.delete(y_train_curr, np.where(train_mask), axis=0)
-    #    X_train_curr = np.delete(X_train_curr, np.where(train_mask), axis=0)
-    #    if (nDeep==1):
-    #        X_train_curr = X_train_curr[:,:,:,0]
-    #    shape = np.shape(X_train_curr)
-    #    X_train_curr = X_train_curr.reshape((shape[0], shape[1], shape[2], nDeep)) # Change 4th dimension to 3 for RGB images and 1 for single colour image
-    #    print('Picked out training set')
-    #    #X_train_curr = np.float16(1) - X_train_curr
-    #    print('training set inverted')
+    X_train_curr = X_train_curr.reshape((shape[0], shape[1], shape[2], nDeep))
 
     # Definition of size of problem
     print('Defining network')
@@ -188,8 +159,7 @@ if __name__ == "__main__":
     model = Sequential()
 
     # model.add(Convolution2D(2, (5, 5), activation = 'relu', kernel_initializer='he_normal', input_shape=in_shape, name='conv1'))
-    model.add(Convolution2D(25, (5, 5), activation='relu', kernel_initializer='he_normal', input_shape=in_shape,
-                            name='conv1'))
+
     # model.add(Convolution2D(12, (5, 5), activation = 'relu', kernel_initializer='he_normal', input_shape=in_shape, name='conv1'))
 
     model.add(MaxPooling2D(pool_size=(2, 2)))

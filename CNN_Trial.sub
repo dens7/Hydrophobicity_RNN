@@ -7,12 +7,12 @@ error = err/job_$(Cluster)_$(Process).err
 output = output/job_$(Cluster)_$(Process).out
 
 executable = run_regress_leave1out.sh
-arguments = $(Process) 5_fold_indices_40.pickle 30 CNN_Input_ideal_all_voxelCount_t30f_2.0x2.0x0.3nm_25x25_All staging frame 25 25
+arguments = $(Process) 5_fold_indices_40.pickle 30 RNN_Input_ideal_all_voxelCount_t30f_2.0x2.0x0.3nm_25x25_All staging frame 25 25
 
 #+IsBuildJob = true
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = Lenet5_keras.py, 5_fold_indices_40.pickle, http://proxy.chtc.wisc.edu/SQUID/kelkar2/python.tar.gz 
+transfer_input_files = RNN_Keras.py, 5_fold_indices_40.pickle, http://proxy.chtc.wisc.edu/SQUID/kelkar2/python.tar.gz
 initialdir=INIT_DIR/
 
 requirements = (has_avx == true) && (OpSysMajorVer == 7) && (Target.HasCHTCStaging == true)

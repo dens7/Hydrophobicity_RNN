@@ -7,7 +7,7 @@ error = ERR_FOLDER/job_$(Cluster)_$(Process).err
 output = OUTPUT_FOLDER/job_$(Cluster)_$(Process).out
 
 executable = EXECUTABLE
-arguments = $(Process) PICKLE_NAME NDEEP INPUT_IMAGES_FOLDER SERVER NORM_METHOD IMG_ROWS IMG_COLS
+arguments = $(Process) PICKLE_NAME NDEEP INPUT_IMAGES_FOLDER NORM_METHOD IMG_ROWS IMG_COLS
 
 #+IsBuildJob = true
 should_transfer_files = YES
