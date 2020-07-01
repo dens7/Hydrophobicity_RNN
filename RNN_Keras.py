@@ -7,8 +7,6 @@ Created on Wed Jan  2 11:37:22 2019
 
 import numpy as np
 import matplotlib
-from tensorflow_core.python.keras.layers import LSTM
-
 matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 import os
@@ -19,7 +17,7 @@ import tensorflow
 from tensorflow import keras
 from keras import backend as K
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation, Flatten
+from keras.layers import Dense, Dropout, Activation, Flatten, LSTM
 from keras.utils import np_utils
 import sys
 import gc
@@ -55,10 +53,10 @@ def load_pickle_array(folder, file):
 
 
 if __name__ == "__main__":
-
+    print(sys.argv)
     index = int(sys.argv[1])
     file_name = sys.argv[2]
-    nDeep = sys.argv[3]
+    nDeep = int(sys.argv[3])
     validate_input_folder = train_input_folder = sys.argv[4]
     output_folder = ""
     norm_method = sys.argv[5]  # referring to the choice of normalizing frame-wise or all-wise
@@ -112,11 +110,17 @@ if __name__ == "__main__":
         y_train = np.delete(y_train, np.where(y_train == val), axis=0)
 
     print("Shape of X_train before:", X_train.shape)
-    # Arrange the array by time stamps
+    # Arrange the X train array by time stamps
     X_train = np.moveaxis(X_train, -1, 1)
     unflattened_shape = X_train.shape
     X_train = np.reshape(X_train, (unflattened_shape[0], unflattened_shape[1], -1))
     print("Shape of X_train after:", X_train.shape)
+
+    # Arrange the X validate array by time stamps
+    X_validate = np.moveaxis(X_validate, -1, 1)
+    unflattened_shape = X_validate.shape
+    X_validate = np.reshape(X_validate, (unflattened_shape[0], unflattened_shape[1], -1))
+    print("Shape of X_train after:", X_validate.shape)
 
     # Definition of size of problem
     print('Defining network')
@@ -129,19 +133,18 @@ if __name__ == "__main__":
     print('X_train shape:', X_train.shape)
     print('y_train shape:', y_train.shape)
     print('X_test shape:', X_validate.shape)
-    print('y_test shape:', y_validate)
+    print('y_test shape:', y_validate.shape)
 
     # RNN Model creation
 
     model = Sequential()
-    model = Sequential()
     model.add(LSTM(128, input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(Dense(32, activation='linear'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='linear'))
     model.compile(loss='mse', optimizer='adamax', metrics=["mse"])
     print('Model compiled, now fitting')
 
-    history = model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1,
-                        validation_split=0.2)
+    history = model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_split=0.2)
     print('Model fit, now predicting for validation set')
 
     #  Each point in X_validate is predicted
@@ -151,12 +154,12 @@ if __name__ == "__main__":
         'y_train': np.unique(y_train),
         'y_validate': np.unique(y_validate),
     }
-    file_name = output_folder + 'regress_store_' + str(i) + '_j_' + str(j) + '_k_' + str(k) + '.pickle'
+    file_name = output_folder + 'regress_store.pickle'
     pickle_in = open(file_name, 'wb')
     pickle.dump(data, pickle_in)
     pickle_in.close()
 
-    file_name = output_folder + 'model_store_' + str(i) + '_j_' + str(j) + '_k_' + str(k) + '.pickle'
+    file_name = output_folder + 'model_store.pickle'
     pickle_in = open(file_name, 'wb')
     pickle.dump(model, pickle_in)
     pickle_in.close()

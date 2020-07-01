@@ -10,7 +10,8 @@ stack=(30)
 surfaces=ideal
 ligand_set=all
 
+# shellcheck disable=SC2068
 for i in ${stack[@]}; do
-	bash submit_chtc.sh ${i} ${surfaces} ${size} ${pixels} ${CNStat} "${img_rows}" "${img_cols}" ${ligand_set}
+	bash submit_chtc.sh "${i}" ${surfaces} ${size} ${pixels} ${CNStat} "${img_rows}" "${img_cols}" ${ligand_set}
 done
 
