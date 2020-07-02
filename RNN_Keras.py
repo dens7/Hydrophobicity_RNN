@@ -17,7 +17,7 @@ import tensorflow
 from tensorflow import keras
 from keras import backend as K
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, LSTM,
+from keras.layers import Dense, Dropout, Activation, Flatten, LSTM, GRU
 from keras.utils import np_utils
 import sys
 import gc
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     # RNN Model creation
 
     model = Sequential()
-    model.add(LSTM(512, input_shape=(X_train.shape[1], X_train.shape[2])))
+    model.add(GRU(512, input_shape=(X_train.shape[1], X_train.shape[2])))
     model.add(Dense(64, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='linear'))
