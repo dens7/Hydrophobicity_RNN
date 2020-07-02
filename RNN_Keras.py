@@ -17,7 +17,7 @@ import tensorflow
 from tensorflow import keras
 from keras import backend as K
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, LSTM
+from keras.layers import Dense, Dropout, Activation, Flatten, LSTM,
 from keras.utils import np_utils
 import sys
 import gc
@@ -138,7 +138,8 @@ if __name__ == "__main__":
     # RNN Model creation
 
     model = Sequential()
-    model.add(LSTM(128, input_shape=(X_train.shape[1], X_train.shape[2])))
+    model.add(LSTM(512, input_shape=(X_train.shape[1], X_train.shape[2])))
+    model.add(Dense(64, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='linear'))
     model.compile(loss='mse', optimizer='adamax', metrics=["mse"])
@@ -147,13 +148,13 @@ if __name__ == "__main__":
     history = model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_split=0.2)
     print('Model fit, now predicting for validation set')
 
-    #  Each point in X_validate is predicted
-    y_predict = model.predict(X_validate)
+    # You can also evaluate or predict on a dataset.
 
-    data = {
-        'y_train': np.unique(y_train),
-        'y_validate': np.unique(y_validate),
-    }
+    result = model.evaluate(X_validate, y_validate)
+    data = dict(zip(model.metrics_names, result))
+
+    print(data)
+
     file_name = output_folder + 'regress_store.pickle'
     pickle_in = open(file_name, 'wb')
     pickle.dump(data, pickle_in)
