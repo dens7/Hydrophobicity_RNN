@@ -17,6 +17,10 @@ initialdir=INIT_DIR/
 
 requirements = (has_avx == true) && (OpSysMajorVer == 7) && (Target.HasCHTCStaging == true)
 
++WantGPULab = true
++GPUJobLength = "short"
+
+request_gpus = 1
 request_cpus = 1
 request_memory = REQ_MEMORYGB
 request_disk = REQ_DISKGB
