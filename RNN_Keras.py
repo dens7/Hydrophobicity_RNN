@@ -7,6 +7,8 @@ Created on Wed Jan  2 11:37:22 2019
 
 import numpy as np
 import matplotlib
+from tensorflow_core.python.keras.layers import SimpleRNN
+
 matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 import os
@@ -20,7 +22,12 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten, LSTM, GRU
 from keras.utils import np_utils
 import sys
-import gc
+
+
+def helper(dev, avg):
+    def unstandardized_rmse(y_true, y_pred):
+        return K.sqrt(K.mean(K.square( ((y_pred * dev) + avg) - y_true), axis=-1))
+    return unstandardized_rmse
 
 
 def choose_validation_set_indices(file_name, index):
@@ -101,6 +108,7 @@ if __name__ == "__main__":
 
     # To keep only validation set entries in validation array, and to delete these from the training set
     y_unique = np.unique(y_validate)
+
     fold = choose_validation_set_indices(file_name, index)
     validate_entries = y_unique[fold]
     for val in validate_entries:
@@ -127,8 +135,10 @@ if __name__ == "__main__":
     nb_classes = len(np.unique(y_train))  # Number of classes
 
     # Standardization of the labels of training and validation set
-    y_validate = (y_validate - np.mean(y_train)) / np.std(y_train)
+    std = np.std(y_train)
+    mean = np.mean(y_train)
     y_train = (y_train - np.mean(y_train)) / np.std(y_train)
+    # y_validate = (y_validate - np.mean(y_train)) / np.std(y_train)
 
     print('X_train shape:', X_train.shape)
     print('y_train shape:', y_train.shape)
@@ -138,12 +148,12 @@ if __name__ == "__main__":
     # RNN Model creation
 
     model = Sequential()
-    model.add(LSTM(512, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True))
+    model.add(LSTM(512, input_shape=(X_train.shape[1], X_train.shape[2])))
     model.add(Dropout(0.5))
-    model.add(LSTM(256, activation='relu'))
+    model.add(Dense(256, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='linear'))
-    model.compile(loss='mse', optimizer='adamax', metrics=["mse"])
+    model.compile(loss='mse', optimizer='adamax', metrics=helper(std, mean))
     print('Model compiled, now fitting')
 
     history = model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_split=0.2)
