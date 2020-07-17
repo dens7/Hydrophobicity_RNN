@@ -24,9 +24,9 @@ from keras.utils import np_utils
 import sys
 
 
-def helper(dev, avg):
+def custom_metric(std, mean, mapping_dict):
     def unstandardized_rmse(y_true, y_pred):
-        return K.sqrt(K.mean(K.square( ((y_pred * dev) + avg) - y_true), axis=-1))
+        return K.sqrt(K.mean(K.square(((y_pred * std) + mean) - (y_true * std) + mean), axis=-1))
     return unstandardized_rmse
 
 
@@ -108,7 +108,6 @@ if __name__ == "__main__":
 
     # To keep only validation set entries in validation array, and to delete these from the training set
     y_unique = np.unique(y_validate)
-
     fold = choose_validation_set_indices(file_name, index)
     validate_entries = y_unique[fold]
     for val in validate_entries:
@@ -117,14 +116,21 @@ if __name__ == "__main__":
         X_train = np.delete(X_train, np.where(y_train == val), axis=0)
         y_train = np.delete(y_train, np.where(y_train == val), axis=0)
 
+    non_validate_entries = np.delete(y_unique, fold, axis=0)
+    for val in non_validate_entries:
+        # np.where returns the array of indices where the values in the validation set coincide with the values in the
+        # training set. np.delete removes these values (from X and y)
+        X_validate = np.delete(X_validate, np.where(y_validate == val), axis=0)
+        y_validate = np.delete(y_validate, np.where(y_validate == val), axis=0)
+
     print("Shape of X_train before:", X_train.shape)
-    # Arrange the X train array by time stamps
+    # Arrange the X train array so that time stamps precede the flattened frames
     X_train = np.moveaxis(X_train, -1, 1)
     unflattened_shape = X_train.shape
     X_train = np.reshape(X_train, (unflattened_shape[0], unflattened_shape[1], -1))
     print("Shape of X_train after:", X_train.shape)
 
-    # Arrange the X validate array by time stamps
+    # Arrange the X validate array so that time stamps precede the flattened frames
     X_validate = np.moveaxis(X_validate, -1, 1)
     unflattened_shape = X_validate.shape
     X_validate = np.reshape(X_validate, (unflattened_shape[0], unflattened_shape[1], -1))
@@ -134,12 +140,15 @@ if __name__ == "__main__":
     print('Defining network')
     nb_classes = len(np.unique(y_train))  # Number of classes
 
-    # Standardization of the labels of training and validation set
+    # Calculation of standard deviation and mean to transform labels during Standardization
     std = np.std(y_train)
     mean = np.mean(y_train)
-    y_train = (y_train - np.mean(y_train)) / np.std(y_train)
-    # y_validate = (y_validate - np.mean(y_train)) / np.std(y_train)
 
+    # Standardization of the labels of training and validation set
+    y_train = (y_train - mean) / std
+    y_validate = (y_validate - mean) / std
+
+    # Dictionary that can hasten access to unstandardized (untouched) labels from their standardized versions
     print('X_train shape:', X_train.shape)
     print('y_train shape:', y_train.shape)
     print('X_test shape:', X_validate.shape)
@@ -153,7 +162,7 @@ if __name__ == "__main__":
     model.add(Dense(256, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='linear'))
-    model.compile(loss='mse', optimizer='adamax', metrics=helper(std, mean))
+    model.compile(loss='mse', optimizer='adamax', metrics= [custom_metric(std, mean)])
     print('Model compiled, now fitting')
 
     history = model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_split=0.2)
