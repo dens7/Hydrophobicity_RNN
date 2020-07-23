@@ -17,16 +17,17 @@ import pickle
 import time
 import tensorflow
 from tensorflow import keras
-from keras import backend as K
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, LSTM, GRU
+from keras.layers import Dense, Dropout, Activation, Flatten, LSTM, GRU, Conv1D
 from keras.utils import np_utils
 import sys
+from keras import backend as K
 
 
-def custom_metric(std, mean, mapping_dict):
+def custom_metric(std, mean):
     def unstandardized_rmse(y_true, y_pred):
-        return K.sqrt(K.mean(K.square(((y_pred * std) + mean) - (y_true * std) + mean), axis=-1))
+        return K.sqrt(K.mean(K.square((y_pred * std + mean) - (y_true * std + mean)), axis=-1))
+
     return unstandardized_rmse
 
 
@@ -157,12 +158,17 @@ if __name__ == "__main__":
     # RNN Model creation
 
     model = Sequential()
-    model.add(LSTM(512, input_shape=(X_train.shape[1], X_train.shape[2])))
+    model.add(Conv1D(filters=196, kernel_size=15, strides=4, input_shape = (X_train.shape[1], X_train.shape[2])))
+    model.add(LSTM(512))
     model.add(Dropout(0.5))
     model.add(Dense(256, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='linear'))
-    model.compile(loss='mse', optimizer='adamax', metrics= [custom_metric(std, mean)])
+
+
+    model.compile(loss='mse', optimizer='adamax', metrics=[custom_metric(std, mean)])
+
+
     print('Model compiled, now fitting')
 
     history = model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, validation_split=0.2)
