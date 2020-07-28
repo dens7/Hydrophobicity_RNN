@@ -158,10 +158,15 @@ if __name__ == "__main__":
     # RNN Model creation
 
     model = Sequential()
-    model.add(Conv1D(filters=196, kernel_size=15, strides=4, input_shape = (X_train.shape[1], X_train.shape[2])))
-    model.add(LSTM(512))
+    model.add(LSTM(512), input_shape=(X_train.shape[1], X_train.shape[2]))
+    model.add(Dropout(0.5))
+    model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(256, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(64, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='linear'))
 
